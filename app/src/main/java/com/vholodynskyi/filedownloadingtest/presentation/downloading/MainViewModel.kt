@@ -22,7 +22,8 @@ class MainViewModel @Inject constructor(
     private val _state = mutableStateOf(DownloadingState())
     val state: State<DownloadingState> = _state
 
-    private val fileUrl = "https://www.africau.edu/images/default/sample.pdf" // DON'T FORGET TO SET YOUR URL
+    private val fileUrl =
+        "https://research.nhm.org/pdfs/10840/10840-001.pdf" // DON'T FORGET TO SET YOUR URL
 
     private val testJob: Job
 
@@ -31,11 +32,14 @@ class MainViewModel @Inject constructor(
     }
 
     private fun downloadFiles(): Job {
-        return downloadFileUseCase(fileUrl)
-            .onEach { result ->
+        return downloadFileUseCase(fileUrl).onEach { result ->
                 _state.value = when (result) {
                     is Resource.Error -> DownloadingState(error = result.message ?: "")
-                    is Resource.Loading -> DownloadingState(isLoading = true)
+                    is Resource.Loading -> {
+                        DownloadingState(
+                            isLoading = true, currentLoadingPercentage = result.loadingPercentage
+                        )
+                    }
                     is Resource.Success -> DownloadingState(file = result.data ?: "")
                 }
             }.onCompletion {

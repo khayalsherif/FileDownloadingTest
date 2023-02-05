@@ -1,11 +1,7 @@
 package com.vholodynskyi.filedownloadingtest.presentation.downloading
 
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.material.Button
-import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
@@ -43,9 +39,15 @@ fun DownloadingScreen(
             )
         }
         if (state.isLoading) {
-            CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
-            Button(
-                modifier = Modifier.align(Alignment.BottomCenter),
+            Box(
+                modifier = Modifier.align(Alignment.Center)
+            ) {
+                CircularProgressBar(
+                    percentage = 1F,
+                    currentPercentage = state.currentLoadingPercentage
+                )
+            }
+            Button(modifier = Modifier.align(Alignment.BottomCenter),
                 onClick = { viewModel.cancelDownloading() }) {
                 Text(text = "Cancel downloading")
             }

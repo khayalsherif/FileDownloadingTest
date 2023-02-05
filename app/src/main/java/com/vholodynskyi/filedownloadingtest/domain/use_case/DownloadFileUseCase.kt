@@ -7,10 +7,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
-import java.io.BufferedInputStream
-import java.io.File
-import java.io.FileOutputStream
-import java.io.IOException
+import java.io.*
 import java.net.HttpURLConnection
 import java.net.URL
 import javax.inject.Inject
@@ -27,12 +24,12 @@ class DownloadFileUseCase @Inject constructor() {
         var connection: HttpURLConnection? = null
 
         if (fileUrl.isBlank()) {
-            emit(Resource.Error<String>("Url is incorrect"))
+            emit(Resource.Error("Url is incorrect"))
             return@flow
         }
 
         try {
-            emit(Resource.Loading<String>())
+            emit(Resource.Loading(loadingPercentage = 0))
 
             val downloadTarget = targetFile(fileName(fileUrl))
 
@@ -43,21 +40,25 @@ class DownloadFileUseCase @Inject constructor() {
             val buffer = ByteArray(4096)
             var downloadedFileSize = 0L
             var currentRead = 0
+            val fileSize by lazy { connection.contentLengthLong }
+            var currentPercentage = 0
 
             while (currentRead != -1 && currentCoroutineContext().isActive) {
                 downloadedFileSize += currentRead
                 outputStream.write(buffer, 0, currentRead)
                 currentRead = inputStream.read(buffer, 0, buffer.size)
 
+                // Find current download percentage with ratio formula
+                currentPercentage = ((100 * downloadedFileSize) / fileSize).toInt()
+                emit(Resource.Loading(loadingPercentage = currentPercentage))
+
                 // for testing only
                 Log.d("DownloadingTest", "chunk $currentRead")
-                delay(1000)
-                // for testing only
             }
 
-            emit(Resource.Success<String>(downloadTarget.path))
+            emit(Resource.Success(downloadTarget.path))
         } catch (e: IOException) {
-            emit(Resource.Error<String>(e.localizedMessage ?: "Couldn't reach server"))
+            emit(Resource.Error(e.localizedMessage ?: "Couldn't reach server"))
         } finally {
             withContext(NonCancellable) {
                 Log.d("DownloadingTest", "NonCancellable")
